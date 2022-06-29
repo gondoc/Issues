@@ -1,6 +1,119 @@
 # code_review & recode_qna
 
 
+220629 codeReview 
+
+	feature clustered 상태에서 map에 올려진 모든 feature들을 접근하고 싶을때?
+	-> cluster : zoom out 을 하다보면 특정 근거리 n개의 feature 들이 1개의 feature로 합쳐 표출되는 기능. 
+	
+		이때, 실제 feature을 접근해보면 feature안에 features(array)가 존재한다.
+			-> 겹쳐져 보이지 않는 subFeatures까지 모두 합산하여 처리해야 한다.
+			-> 테스트 프로젝트를 수행할 때엔, for문 돌리고 arr.push(subFeature)하여 처리했다.
+			-> 드물게 cluster가 안되어 있는 1개의 Cam이 있는 경우가 있다.(보통 외지임.)
+				-> 만약 해당 cam 이 있다면 if문 처리도 해야한다.
+							
+				const subFeatures = feature.get("features");
+				for(let subFeature of subFeatures)  {
+					arr.push({
+						feature : subFeature
+					});
+				}
+			
+	지도에서 point A와 point B 간 distance를 구해야 한다면?
+	-> 이때, 보이는 지도에서 구하는 것이 맞는지, 지구에서 실제 이동하는 것인지 판단해야 한다.
+		-> 평면이 아닌 지구는 구 형태이다.
+		
+		const wgs84Sphere = new ol.Sphere(6378137);		
+		const result = wgs84Sphere.haversineDistance( c1, c2 );
+			// 고정적으로 radius 값을 6378137 meter 로 준다.
+			-> 지구의 반지름은 일반적으로 6378137 미터(적도반경)
+			// c1, c2 == 비교할 두 좌표배열
+				-> [selectedX, selectedY], [eventX, eventY]
+		
+	배열을 정렬해야 한다면?
+		오름차순 
+		arr.sort((a, b) => a - b);
+		
+		내림차순
+		arr.sort((a, b) => b - a);
+
+		-> 만약 배열의 요소를 기준으로 정렬해야 한다면?
+			오름차순 
+			arr.sort((a, b) => a.key - b.key);
+			
+			내림차순
+			arr.sort((a, b) => b.key - a.key);
+		
+	for문의 오해?
+		기본 for문과 forEach문 둘다 특장점이 있으니, 
+		하나를 주로 사용하려고 하지말고 적재적소에 사용할 것.
+	
+		흔히 처음 배우는 형태의 for문
+			ex 
+				for ( i=0; i<count; i++) {
+		
+		그 다음으로 배우는 for문
+			ex
+				for (BoardVO pojo : boardList) {
+
+		+ for in / for of
+			ex
+				for(let x in y) {
+				for(let x of y) {
+			
+	for문을 돌릴때, 동적태그로 생성되거나, 뷰단의 나열되는 number에 접근하고 싶을때,
+		selector 에도 ${i} 형태로 백틱을 넣을 수 있음. 
+			ex 
+				$(`#example_title_${i}`).text(example.get('someThing'));
+				
+	openlayers featureCollection coordinate 접근할때의 ol 라이브러리
+		ol.ol.js / ol.debug.js 
+	
+		배포 : ol.js 
+			-> feature.getGeometry().getFirstCoordinate();
+		개발 : debug.js
+			-> feature.getGeometry().flatCoordinate();
+		
+	외부로 설정한 각각의 js 파일들이 로드되는 시점이 겹쳐 원하는 시점, 원하는 변수가 생성되지 않을 때 
+		js 가 동작해버린다면 promise 함수를 이용하자.
+			+ 다른 방법도 있음. 하단 참고.
+	
+		$.ajax ({
+			url : '/some/thing/list',
+			method : 'get',
+			dataType : 'json',
+			success : function(json) {
+				...
+			}
+		}).then(()=> {
+			// promise function 
+			// 여기서 원하는 동작을 처리하면 된다. 
+		});
+	
+			+. 화면에서 새로운 <div class="loading" id="loading"> 만들어 loadingStyle.css를 준다.
+			화면을 아예 덮어버리는 css를 가진 div 태그를 화면에 보이게 하고 $("#loading").show();
+			
+			loadingStyle.css
+				position: absolute;
+				top: 0px;
+				left: 0px;
+				width: 100%;
+				height: 100%;
+				z-index: 3000;
+				background-color: rgba(200,200,200,0.5);
+			
+			ajax 통신 후 promise 함수 처리로 
+			아래처럼 해당 화면을 덮어버리는 태그를 숨기는 것도 방법임.
+			
+			.then(() => {
+				$("#loading").hide();
+			});
+			
+			로드되지 않은 상태의 화면 자체를 차단하는 것.
+				-> 보통 일반적인 로딩화면을 이렇게 구성한다고 한다.
+				-> 상기 내역에서는 적절한 css만 주었지만, 
+					이미지와 간단한 애니메이션 gif 만 들어가면 
+					우리가 통상적으로 알고 있는 로딩 화면이 구성된다.
 
 ---
 
