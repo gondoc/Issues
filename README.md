@@ -5,6 +5,8 @@
 	지난 JINJU-PUBLISH GIS evtPage 구현 및 리팩토링 완료
 	현재 추후 프로젝트 투입을 위한 React 예제 학습 중 
 	
+---
+	
 220630 GIS projectReview's log
 
 	사용스택 및 기능
