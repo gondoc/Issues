@@ -1,5 +1,68 @@
-# code_review & recode_qna
+# gondo's log
 
+220701 etc
+	
+	지난 JINJU-PUBLISH GIS evtPage 구현 및 리팩토링 완료
+	현재 추후 프로젝트 투입을 위한 React 예제 학습 중 
+	
+220630 GIS projectReview's log
+	사용스택 및 기능
+	1. jq ajax / json
+		1-1. getEventList
+			db 접근 및 evtList(30)건 데이터 목록 표출
+			json으로 받아 for문 돌면서 json.length 만큼 json[i] 마다 
+			뷰단의 특정 태그에 append 시키는 식으로 진행함.
+			값은 data-attribute 이용하여 태그 attr 로 접근할 수 있도록 함. 
+				뷰단의 태그에 필요한 value 들이 있어 추후 동일한 api를 호출하지 않을 수 있음. 
+				추후 event가 생성될 수 있으니, for문 처음 시작할때엔 초기화 처리를 해줘야 한다.
+				
+		1-2. getEventDetail 
+			뷰단에서 출력된 태그 셀렉터, data-attribute 이용하여 data 접근.
+			표출된 목록 중 임의의 1건 onClick 시 상세정보 표출
+			1-1과 동일하게 for문 돌면서 특정 태그 append 하는 식으로 처리함. 
+				for문 첫 시작시 첫 줄로 특정 태그에 append 했던 태그들을 .empty() 해줘야 한다.
+				
+		1-3. getCctvList
+			window가 onload되면 동작하도록 코드를 작성하였고,
+			featureCollection들의 data를 readFeatures 하여 vectorSource에 addFeatures 함.
+				promise 함수 .then(() => { 하여 $.("#loading").hide(); 하였음.
+					대개의 로딩화면은 해당 방식으로 구성됨. 
+					
+				+. 각각의 자바스크립트들의 로드 순서는 아무리 개발자가 순서를 잡아주어도 로드 순서를 보장할 수 없다. 
+					예를 들어, for문 중 첫번째의 동적태그가 생성된 직후 다른 자바스크립트가 동작하여
+					추후 생성될 동적태그가 생성되지 않은 상태에서 자바스크립트가 동작한다던지...
+				-> 해결방안
+					자바스크립트들이 불규칙적으로 로드되어 사용자가 예상하지 못한 환경에서 
+					onClick onKeyUp 등 이벤트를 발생시키지 않게끔하기 위해 
+					화면 모두 덮어버리는 style.css를 가진 <div id="loading"> 를 생성한다.
+					해당 div 태그를 onload 후 처리되는 .then() 부분에 hide() 처리하면 된다. 
+					사용자가 할 수 있는 이벤트를 원천적으로 봉쇄하는 것.
+					
+	2. openLayers
+		2-1. map.view
+			ol.source.XYZ openLayers {x}{y}{z}.png 이용
+			ol.source.Cluster
+
+		2-2. map.feature
+			특정 location btn onClick event발생시 btn의 좌표 접근 및 animate 처리하여 화면이동 표출
+			화면 이동 후 해당 좌표에 feature를 신규 생성함.  
+			신규 feature 는 feature -> source -> layer 순으로 작업하여 map 에 포함시킴. 
+
+		2-2. cctv 투망
+			특정 상황 이벤트 발생 후 해당 이벤트의 cctv btn onClick event발생시 
+			btn의 좌표 접근 및 투망 모니터링 표출
+			이때, 화면에 표출되는 cctv 들은 map 화면을 구성할 때 존재하는 featureCollection들의 정보를 변환하여 
+			화면에 표출한다.
+			
+			jq ajax로 호출하여 map에 표출된 feature들의 정보를 받아 array화 한다.
+			해당 array의 crdnt, selected event crdnt 간 distance를 wgs84Sphere.haversineDistance(c1, c2)하여 
+			신규 array에 push 한다. 이때 clustered 된 subFeature까지 찾아서 array에 push하는 것이 중요함.
+		
+			distance 적은 순(이벤트 발생 위치와 cctv들 중 가장 가까운 cctv)으로 화면에 표출 하는 것이 
+			목적이기 때문에 distance를 기준으로 sort desc 해주어야 한다. 
+				arr.sort((a, b) => a.distance - b.distance);
+
+---
 
 220629 codeReview 
 
