@@ -6,6 +6,7 @@
 	현재 추후 프로젝트 투입을 위한 React 예제 학습 중 
 	
 220630 GIS projectReview's log
+
 	사용스택 및 기능
 	1. jq ajax / json
 		1-1. getEventList
