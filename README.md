@@ -1,5 +1,94 @@
 # gondo's log
 
+220705 제너레이터 함수
+
+	Generator 문법
+	함수를 작성할 때 함수를 특정 구간에 멈춰 놓거나,
+	원할때 다시 돌아가게 할 수도 있음.
+	또한, 결과값을 여러번 반환할 수도 있음.
+
+	reference : https://ko.javascript.info/generators
+	
+	function weirdFunction() { // 오직 1만 리턴됨. 
+		return 1;
+		return 2;
+		return 3;
+	}
+	
+	return 이 아닌 yield 는 yield : '생산하다, 산출하다' 라는 뜻을 갖고 있음. 
+
+	ex)	function* generateSequence(){
+		yield 1;
+		yield 2;
+		return 3;
+	}
+			
+	일반적인 function() 과는 다르게 function 뒤 * 이 붙는다.
+	제너레이터의 주요 메서드로 .next()가 있음. 
+	
+	next() 를 호출하면 
+		가장 가까운 yield <value>문을 만날때까지 실행이 지속됨.
+		-> value를 생략할 수 도 있는데, 
+			value를 생략하면 이 경우엔 undefined 가 반환됨.
+		이후 yield <value>문을 만나면 실행이 멈추고 
+		산출하고자 하는 값인 value가 바깥 코드에 반환됨. 
+		
+	next() 는 항상 아래 두 프로퍼티를 가진 객체를 반환한다.
+	value : 산출 값
+	done : 함수 코드 실행이 끝났으면 true, 아니라면 false. 
+
+		
+	예제
+		function* generateSequence() {
+		  yield 1; 
+		  yield 2;
+		  return 3;
+		}
+
+		let generator = generateSequence();
+		let one = generator.next();
+		alert(JSON.stringify(one)); // {value: 1, done: false}
+
+			function* generateSequence() {
+			  yield 1;  <-- {value: 1, done: false}
+			  yield 2;
+			  return 3;
+			}
+
+	이후 generator.next()를 다시 호출하면?
+		let two = generator.next();
+		alert(JSON.stringify(two)); // {value: 2, done: false}
+
+			function* generateSequence() {
+			  yield 1; 
+			  yield 2; <-- {value: 2, done: false}
+			  return 3;
+			}
+
+	또다시 generator.next() 를 다시 호출하면? 
+		let three = generator.next();
+		alert(JSON.stringfy(three)); // {value: 3, done: true}
+
+			function* generateSequence() {
+			  yield 1; 
+			  yield 2; 
+			  return 3; <-- {value: 3, done: true}
+			}
+
+	제너레이터가 종료되었기 때문에 
+	마지막 결과인 value:3, done:true 가 리턴되고
+	
+	만약, 또 generator.next()를 호출하거나, 
+	여러번 더 호출하여도 객체 {done:true} 가 리턴됨.
+	
+	제너레이터 함수는 이터러블이다. 
+		iterable 객체 ( 반복 가능한 객체 )
+			for .. of 반복문을 적용할 수 있다.
+			
+	컬렉션을 순회하는데 유용하게 쓸 수 있다.
+
+---
+
 220704 Load Balancing
 
 	Load balancing
