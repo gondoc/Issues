@@ -1,5 +1,109 @@
 # gondo's log
 
+220722 SDB_Websocket 로직 구상 및 구현 정리 
+
+	로직 구상
+		웹소켓을 이용하여 드론과 통신 환경을 세팅하고,
+		실시간으로 이동하고 배터리가 소모되는 등 드론의 상태를 실시간으로 확인하기 위해 
+		@Scheduled 를 이용하여 매 3 초마다 통신을 하도록 로직을 구성함.
+		
+		또한, 구축된 웹소켓 통신환경에서 웹소켓세션을 이용해 서버에서 보낸 정보를 
+		클라이언트에서 받게 할 예정임. 
+		클라이언트는 세션영역에서 서버측이 지속적으로 보낸 정보를 확인하고 받을 수 있음. 
+
+	상세 로직
+
+		1. 스케줄링 기능을 사용하기 위해서는 @EnableScheduling 어노테이션을 상위 클래스에 작성해야 한다.
+
+		2. 보통 최상위 루트 클래스인 xxxApplication.java 에 @EnableScheduling 어노테이션을 작성한다. 
+
+		3. Run Application에 @EnableScheduling을 작성한 뒤,
+			Scheduled가 동작할 수 있는 클래스를 따로 작성한다.
+
+		4. 보통 스케줄러를 위한 패키지를 따로 생성 후 
+			xxxScheduler라 명명하고 클래스에 @Component 어노테이션을 작성한다.
+
+			@Component를 작성하는 이유 : 스프링에서 자바 객체 빈으로 등록하기 위해서. 
+			
+			빈으로 등록하는 어노테이션
+				@Component		/ 사용자가 컨트롤 할 수 있는 자바객체 등록
+
+				@Configuration	/ 설정파일임을 알리는 어노테이션
+
+				@Bean			/ 사용자가 컨트롤 할 수 없는 자바객체 등록
+
+				주로 자바 객체 형태로 설정을 하는 경우,
+				@Configuration + classConfig.java -> @Bean + someMethod() 형태로 많이 씀. 
+				
+		5. scheduler의 실제 로직을 담을 Class에 @Component, Method에 @Scheduled 작성
+			금번 스케줄 기능을 구현할 때엔,
+			@Component + DroneScheduler -> @Scheduled + sendDroneLocation() 형태로 구현함.
+			
+			@Scheduled 사용 규칙
+				Method는 void 타입으로 작성하고, 매개변수를 받을 수 없다. 
+
+			@Scheduled는 얼마나 자주, 어떤 빈도로, 딜레이를 어떻게 줄 지 설정할 수 있음.
+				- @Scheduled(fixedRate = 2000) // 이전 작업의 종료 여부와 상관없이 설정된 시간 간격으로 반복. 
+								  장애발생시 중첩되어 실행됨. 주의 요망.
+				- @Scheduled(initialDelay = 1000) // Job을 처음 실행까지 초기 딜레이(대기) 시간 설정
+				- @Scheduled(cron = "0/3 * * * * *") // cron : 크론 표현식을 이용하여 스케줄링한다. 3초마다 실행함.
+				- @Scheduled(fixedDelay = 2000) // fixedDelay : 이전 작업이 종료되고 다시 시작되는 시간 설정
+
+		6. DroneScheduler 클래스의 @Scheduled 메서드에서 3초마다 드론 정보를 svc.getDroneInfoList(); 하여
+			맵핑된 droneList 변수를 gson.toJson(list) 화 하여 클라이언트의 session 영역에 뿌려줘야 한다.
+
+			-> 이때 작성된 @Component + DroneScheduler는 MVC 패턴의 Controller 위치 정도로 이해해도 좋다
+				굳이 MVC 패턴으로 비교하자면 아래의 도식화가 된다. 
+				
+				view ---- Controller -------- Service ------------------------ DAO
+				session - DroneScheduler ---- DroneWebsocketConnectionConfig - session.sendText(message)
+				
+		7. 6의 list 정보를 클라이언트의 session 영역에 뿌려주기 위해,
+			@Service 어노테이션이 작성된 DroneWebsocketConnectionConfig.java 클래스와 
+			sendMessageAllClients 메서드를 만들어 작성한다. 해당 메서드는 message를 매개변수로 
+			받아 session 영역으로 session.getAsyncRemote().sendText(message) 한다.
+
+			서버측에서 JS단으로 보내는 웹소켓 호출 주소를 설정해주어야 한다.
+			주로 api path 처럼 작성된다. 작성 양식은 아래와 같다. 
+			
+			@ServerEndPoint(value = "/api/data/drone/list")
+			
+			이렇게 설정해두면 JS 단에서 
+			let WEBSOCKET = new WebSocket("ws://" + window.location.host + "/sdb/api/data/drone/list");
+			하면 서버측에서 보낸 websocket 요청을 js 단에서 받을 수 있다. 
+
+		8. 매 3초마다 동작하도록 만든 스케줄러에서 droneList를 생성하고, 생성한 droneList를 
+			DroneWebsocketConnectionConfig의 sendMessageAllClients의 인자로 보내면 
+			매 3초마다 클라이언트의 세션 영역에 뿌려주게 된다. 
+			이렇게 하면 서버측에서 세팅해야 하는 websocket 구성은 끝난다.
+
+---
+
+220722 웹소켓 / HTTP 통신 간단 이론 정리
+
+	웹소켓 이론 정리 
+		1. 클라이언트단에서 웹소켓 통신 수립 시도 및 서버단으로 3-way 핸드쉐이크 요청 
+		2. 3-way 핸드쉐이크 요청을 받은 서버가 요청에 대한 수립 응답을 보냄
+		3. 통신이 연결된 후 두 피어 간 대칭 상대로 통신을 주고 받음.
+		4. 한 쪽 피어가 통신을 종료 요청을 보내고 통신이 종료됨.
+		
+		+. 웹소켓 통신은 통신이 열려있다면 쌍방 어느쪽이든 지속적으로 통신이 가능하며
+		어느 한 쪽의 통신이 종료시킨다면 4-way 핸드쉐이크 단계를 통해 통신이 종료됨.
+
+	HTTP 이론 정리
+		쌍방 통신이 가능한 웹소켓과 달리 단방향 통신이 이루어지는 통신이며,
+		HTTP 통신을 주로 RestFul 하게 통신하는 restapi 형태로 코드를 작성하는 것이 트렌드임.
+
+		서버가 클라이언트에게 정보를 받기 위해서는 요청(Req)가 필요하며 
+		요청을 받은 클라이언트가 응답(Res)을 서버측으로 전송하게 됨. 
+
+		이렇듯, 단방향 통신으로 한쪽이 먼저 요청을 하고 요청을 받은 다른 한 쪽이 
+		데이터를 요청한 쪽으로 전송하게 되는데, 연결이 한번 주고 받은 뒤 해당 통신은 끝나게 됨. 
+
+		다시 통신하고 싶다면 새로운 요청을 보내 통신을 진행해야 한다. 
+
+---
+
 220720 Server/Client 통신 
 	
 	HTTP
