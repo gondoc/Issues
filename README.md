@@ -44,14 +44,14 @@
 
 			@Scheduled는 얼마나 자주, 어떤 빈도로, 딜레이를 어떻게 줄 지 설정할 수 있음.
 				- @Scheduled(fixedRate = 2000)
-								  // 이전 작업의 종료 여부와 상관없이 설정된 시간 간격으로 반복. 
-									장애발생시 중첩되어 실행됨. 주의 요망.
+					// 이전 작업의 종료 여부와 상관없이 설정된 시간 간격으로 반복. 
+						장애발생시 중첩되어 실행됨. 주의 요망.
 				- @Scheduled(initialDelay = 1000) 
-								  // Job을 처음 실행까지 초기 딜레이(대기) 시간 설정
+					// Job을 처음 실행까지 초기 딜레이(대기) 시간 설정
 				- @Scheduled(cron = "0/3 * * * * *")
-								  // cron : 크론 표현식을 이용하여 스케줄링한다. 3초마다 실행함.
+					// cron : 크론 표현식을 이용하여 스케줄링한다. 3초마다 실행함.
 				- @Scheduled(fixedDelay = 2000)
-								  // fixedDelay : 이전 작업이 종료되고 다시 시작되는 시간 설정
+					// fixedDelay : 이전 작업이 종료되고 다시 시작되는 시간 설정
 
 		6. DroneScheduler 클래스의 @Scheduled 메서드에서 3초마다 드론 정보를 svc.getDroneInfoList(); 하여
 			맵핑된 droneList 변수를 gson.toJson(list) 화 하여 클라이언트의 session 영역에 뿌려줘야 한다.
