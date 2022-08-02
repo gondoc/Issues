@@ -1,5 +1,19 @@
 # gondo's log
 
+220802 openlayers Verctor와 Overlay의 차이
+
+	new ol.layer.Vector
+		생성하는 위치 : 맵 레이어 아래에 생성됨
+		대용량 처리에 강함
+			많은 feature 들을 control 할 수 있어 많은 데이터를 맵 위에 올리더라도 걱정안해도 됨.
+	
+	new Overlay
+		생성하는 위치 : 맵 레이어 위에 생성됨
+		대용량 처리에 약함.
+			많은 feature 들을 올릴 경우 과부하될 가능성을 고려해야 함. 
+			
+---
+
 220722 SDB_Websocket 로직 구상 및 구현 정리 
 
 	로직 구상
